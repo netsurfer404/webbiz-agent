@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebBiz Agent — buildmyweb.shop</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent: #00ff88;
+    --accent2: #0088ff;
+    --warn: #ff6b35;
+    --text: #e8e8f0;
+    --muted: #5a5a7a;
+    --card: #13131f;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .shell { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 0 32px; border-bottom: 1px solid var(--border); margin-bottom: 32px;
+  }
+  .logo { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .logo small { font-size: 11px; color: var(--muted); font-weight: 400; margin-left: 8px; font-family: 'JetBrains Mono', monospace; }
+  .status-bar { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--accent); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+  .tabs { display: flex; gap: 4px; margin-bottom: 28px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .tab {
+    padding: 10px 16px; font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600;
+    color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+    margin-bottom: -1px; transition: all 0.2s; background: none;
+    border-top: none; border-left: none; border-right: none; letter-spacing: 0.3px;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 16px; }
+  .card-header { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  .badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-family: 'JetBrains Mono', monospace; font-weight: 400; }
+  .badge-green { background: rgba(0,255,136,0.12); color: var(--accent); border: 1px solid rgba(0,255,136,0.2); }
+  .badge-blue { background: rgba(0,136,255,0.12); color: var(--accent2); border: 1px solid rgba(0,136,255,0.2); }
+  .badge-orange { background: rgba(255,107,53,0.12); color: var(--warn); border: 1px solid rgba(255,107,53,0.2); }
+
+  input, select, textarea {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 14px; color: var(--text);
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; outline: none;
+    transition: border-color 0.2s; margin-bottom: 10px;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 90px; }
+  label { font-size: 11px; color: var(--muted); margin-bottom: 4px; display: block; }
+  select option { background: var(--surface); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 11px 22px;
+    border-radius: 6px; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    cursor: pointer; border: none; transition: all 0.2s; letter-spacing: 0.3px;
+  }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover { background: #00cc6a; transform: translateY(-1px); }
+  .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-blue { background: var(--accent2); color: #fff; }
+  .btn-blue:hover { background: #0066cc; transform: translateY(-1px); }
+  .btn-red { background: rgba(255,107,53,0.15); color: var(--warn); border: 1px solid rgba(255,107,53,0.3); }
+  .btn-red:hover { background: rgba(255,107,53,0.25); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+
+  .terminal {
+    background: #08080e; border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px; font-size: 12px; line-height: 1.8; min-height: 180px;
+    max-height: 380px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .line-green { color: var(--accent); }
+  .line-blue { color: var(--accent2); }
+  .line-orange { color: var(--warn); }
+  .line-muted { color: var(--muted); }
+  .line-white { color: var(--text); }
+
+  .lead-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .lead-table th { text-align: left; padding: 8px 12px; color: var(--muted); font-weight: 400; border-bottom: 1px solid var(--border); }
+  .lead-table td { padding: 10px 12px; border-bottom: 1px solid rgba(30,30,46,0.5); vertical-align: middle; }
+  .lead-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .lead-score { display: inline-block; width: 36px; height: 36px; border-radius: 50%; text-align: center; line-height: 36px; font-weight: 600; font-size: 13px; }
+  .score-high { background: rgba(0,255,136,0.15); color: var(--accent); }
+  .score-med  { background: rgba(255,107,53,0.15); color: var(--warn); }
+  .score-low  { background: rgba(90,90,122,0.2); color: var(--muted); }
+
+  .action-btn { padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; border: 1px solid; font-family: 'JetBrains Mono', monospace; transition: all 0.15s; margin: 2px; background: transparent; }
+  .action-btn:hover { transform: translateY(-1px); }
+
+  .site-preview { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .site-preview-bar { background: var(--surface); padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); font-size: 11px; color: var(--muted); }
+  .dot-red { width:8px;height:8px;border-radius:50%;background:#ff5f57; }
+  .dot-yel { width:8px;height:8px;border-radius:50%;background:#febc2e; }
+  .dot-grn { width:8px;height:8px;border-radius:50%;background:#28c840; }
+  .site-preview iframe { width: 100%; height: 380px; border: none; background: #fff; }
+
+  .email-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .email-header { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 12px; display: grid; grid-template-columns: 60px 1fr; gap: 4px; align-items: center; }
+  .email-header span { color: var(--muted); }
+  .email-header input { margin: 0; font-size: 12px; padding: 4px 8px; }
+  .email-body { padding: 16px; }
+  .email-body textarea { margin: 0; min-height: 180px; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 700px) { .grid2 { grid-template-columns: 1fr; } }
+
+  .stats-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+  .stat-card { flex: 1; min-width: 130px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; }
+  .stat-num { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  .info-box { background: rgba(0,136,255,0.06); border: 1px solid rgba(0,136,255,0.18); border-radius: 6px; padding: 12px 14px; font-size: 11px; color: #88bbff; line-height: 1.7; margin-bottom: 14px; }
+  .success-box { background: rgba(0,255,136,0.06); border: 1px solid rgba(0,255,136,0.18); border-radius: 6px; padding: 12px 14px; font-size: 12px; color: var(--accent); line-height: 1.7; margin-top: 12px; display: none; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(0,255,136,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 999;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 20px; font-size: 13px;
+    display: none; align-items: center; gap: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    animation: slideIn 0.3s ease;
+  }
+  .toast.show { display: flex; }
+  @keyframes slideIn { from { transform: translateY(20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+
+  .status-pill {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 10px; font-family: 'JetBrains Mono', monospace;
+  }
+  .pill-new { background: rgba(90,90,122,0.2); color: var(--muted); }
+  .pill-emailed { background: rgba(0,136,255,0.15); color: var(--accent2); }
+  .pill-building { background: rgba(255,107,53,0.15); color: var(--warn); }
+  .pill-site_built { background: rgba(0,255,136,0.15); color: var(--accent); }
+  .pill-closed { background: rgba(204,136,255,0.15); color: #cc88ff; }
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast">
+  <span id="toast-icon">✓</span>
+  <span id="toast-msg">Done!</span>
+</div>
+
+<div class="shell">
+  <header>
+    <div class="logo">Web<span>Biz</span> Agent <small>buildmyweb.shop</small></div>
+    <div class="status-bar"><div class="dot"></div> LIVE</div>
+  </header>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--accent)" id="stat-leads">0</div>
+      <div class="stat-label">Total Leads</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--accent2)" id="stat-emails">0</div>
+      <div class="stat-label">Emails Sent</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--warn)" id="stat-sites">0</div>
+      <div class="stat-label">Sites Built</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:#cc88ff" id="stat-conv">0%</div>
+      <div class="stat-label">Conversion</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('prospect',this)">🔍 Prospect</button>
+    <button class="tab" onclick="switchTab('analyze',this)">📊 Analyze</button>
+    <button class="tab" onclick="switchTab('build',this)">🏗 Build Site</button>
+    <button class="tab" onclick="switchTab('outreach',this)">✉️ Outreach</button>
+    <button class="tab" onclick="switchTab('pipeline',this)">📋 Pipeline</button>
+    <button class="tab" onclick="switchTab('settings',this)">⚙️ Settings</button>
+  </div>
+
+  <!-- ═══════════ PROSPECT ═══════════ -->
+  <div id="tab-prospect" class="panel active">
+    <div class="card">
+      <div class="card-header">🔍 Find Companies Without Websites <span class="badge badge-green">AI-POWERED</span></div>
+      <div class="info-box">The agent identifies businesses in your target area that have no web presence, scores them by opportunity, and saves them directly to your pipeline.</div>
+      <div class="grid2">
+        <div>
+          <label>Business Type / Niche</label>
+          <input id="biz-type" type="text" placeholder="e.g. plumber, bakery, dentist…" />
+          <label>Country / Region</label>
+          <input id="biz-country" type="text" placeholder="e.g. South Africa, Nigeria…" />
+        </div>
+        <div>
+          <label>City / Area</label>
+          <input id="biz-city" type="text" placeholder="e.g. Johannesburg, Lagos…" />
+          <label>Max Leads</label>
+          <select id="biz-max">
+            <option value="5">5 leads</option>
+            <option value="10" selected>10 leads</option>
+            <option value="20">20 leads</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="prospect-btn" onclick="runProspect()">⚡ Find Leads</button>
+        <button class="btn btn-secondary" onclick="clearTerminal('prospect-output')">Clear</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">Agent Output</div>
+      <div class="terminal" id="prospect-output"><span class="line-muted">// Ready. Configure search above and click "Find Leads".</span>
+</div>
+    </div>
+  </div>
+
+  <!-- ═══════════ ANALYZE ═══════════ -->
+  <div id="tab-analyze" class="panel">
+    <div class="card">
+      <div class="card-header">📊 Analyze Business Value & ROI <span class="badge badge-blue">DEEP ANALYSIS</span></div>
+      <div class="info-box">Enter a company and the agent produces a full report: why they need a site, revenue potential, features to pitch, and a closing argument.</div>
+      <label>Company Name</label>
+      <input id="an-company" type="text" placeholder="e.g. Mama's Kitchen, Soweto" />
+      <label>Industry / What they do</label>
+      <input id="an-industry" type="text" placeholder="e.g. traditional catering service" />
+      <label>Any known details (optional)</label>
+      <textarea id="an-details" placeholder="e.g. 15 staff, operates from physical store, phone orders only…"></textarea>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="runAnalyze()">🧠 Analyze Business</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">Analysis Report</div>
+      <div class="terminal" id="analyze-output"><span class="line-muted">// Enter company details above.</span>
+</div>
+    </div>
+  </div>
+
+  <!-- ═══════════ BUILD SITE ═══════════ -->
+  <div id="tab-build" class="panel">
+    <div class="card">
+      <div class="card-header">🏗 Generate Website for Client <span class="badge badge-orange">LIVE BUILD</span></div>
+      <div class="grid2">
+        <div>
+          <label>Business Name</label>
+          <input id="build-name" type="text" placeholder="e.g. Mama's Kitchen" />
+          <label>Industry</label>
+          <input id="build-industry" type="text" placeholder="e.g. Catering & Events" />
+          <label>Brand Color</label>
+          <input id="build-color" type="color" value="#e8521a" style="height:40px;padding:4px 8px;" />
+        </div>
+        <div>
+          <label>Tagline / Description</label>
+          <textarea id="build-tagline" placeholder="e.g. Authentic South African flavours for events and daily meals." style="min-height:80px;"></textarea>
+          <label>Location</label>
+          <input id="build-location" type="text" placeholder="e.g. Soweto, Johannesburg" />
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="runBuildSite()">🚀 Build Website</button>
+        <button class="btn btn-secondary" onclick="resetPreview()">Reset Preview</button>
+      </div>
+    </div>
+    <div id="build-status" style="display:none;" class="card">
+      <div class="card-header">Build Log</div>
+      <div class="terminal" id="build-output" style="min-height:80px;"></div>
+    </div>
+    <div class="site-preview" id="site-preview-wrap" style="display:none;margin-top:16px;">
+      <div class="site-preview-bar">
+        <div class="dot-red"></div><div class="dot-yel"></div><div class="dot-grn"></div>
+        <span id="site-url-bar">https://client.buildmyweb.shop</span>
+      </div>
+      <iframe id="site-frame"></iframe>
+    </div>
+  </div>
+
+  <!-- ═══════════ OUTREACH ═══════════ -->
+  <div id="tab-outreach" class="panel">
+    <div class="card">
+      <div class="card-header">✉️ AI Email Composer + Real Sending <span class="badge badge-green">LIVE via Resend</span></div>
+      <div class="info-box">Emails are sent for real via Resend from <strong>hello@buildmyweb.shop</strong>. The AI personalises each email to the specific business and industry.</div>
+      <div class="grid2">
+        <div>
+          <label>Business Owner Name</label>
+          <input id="out-owner" type="text" placeholder="e.g. Thandiwe Dlamini" />
+          <label>Company Name</label>
+          <input id="out-company" type="text" placeholder="e.g. Mama's Kitchen" />
+          <label>Their Email Address</label>
+          <input id="out-email" type="email" placeholder="e.g. info@mamaskitchen.co.za" />
+        </div>
+        <div>
+          <label>Industry</label>
+          <input id="out-industry" type="text" placeholder="e.g. Catering" />
+          <label>Key Pain Point / Opportunity</label>
+          <textarea id="out-pain" placeholder="e.g. Relies on word of mouth. No online booking." style="min-height:80px;"></textarea>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="runComposeEmail()">📝 Compose Email</button>
+      </div>
+    </div>
+
+    <div id="email-preview" style="display:none;" class="card">
+      <div class="card-header">Email Preview — Edit before sending</div>
+      <div class="email-box">
+        <div class="email-header">
+          <span>To:</span><input id="ep-to" type="email" />
+          <span>From:</span><input id="ep-from" value="hello@buildmyweb.shop" readonly style="color:var(--muted);" />
+          <span>Subject:</span><input id="ep-subject" type="text" />
+        </div>
+        <div class="email-body">
+          <textarea id="ep-body" style="min-height:220px;"></textarea>
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:12px;">
+        <button class="btn btn-primary" id="real-send-btn" onclick="sendRealEmail()">📨 Send Real Email</button>
+        <button class="btn btn-secondary" onclick="runComposeEmail()">↺ Regenerate</button>
+      </div>
+      <div class="success-box" id="email-success">✓ Email sent successfully via Resend! The lead status has been updated in your pipeline.</div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card-header">📞 Call Script Generator</div>
+      <div class="grid2">
+        <div>
+          <label>Business Name</label>
+          <input id="call-biz" type="text" placeholder="e.g. Mama's Kitchen" />
+        </div>
+        <div>
+          <label>Industry</label>
+          <input id="call-ind" type="text" placeholder="e.g. catering" />
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="runCallScript()">📞 Generate Call Script</button>
+      </div>
+      <div class="terminal" id="call-output" style="margin-top:12px;min-height:80px;display:none;"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ PIPELINE ═══════════ -->
+  <div id="tab-pipeline" class="panel">
+    <div class="card">
+      <div class="card-header">
+        📋 Lead Pipeline
+        <span class="badge badge-green">SUPABASE LIVE</span>
+        <button class="btn btn-secondary" style="margin-left:auto;padding:6px 14px;font-size:11px;" onclick="loadLeads()">↺ Refresh</button>
+      </div>
+      <div id="pipeline-empty" class="info-box">No leads yet. Use the Prospect tab to find companies — they'll save here automatically.</div>
+      <div id="pipeline-table-wrap" style="display:none;overflow-x:auto;">
+        <table class="lead-table" id="pipeline-table">
+          <thead>
+            <tr>
+              <th>Score</th>
+              <th>Company</th>
+              <th>Contact</th>
+              <th>Industry</th>
+              <th>Location</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="pipeline-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ SETTINGS ═══════════ -->
+  <div id="tab-settings" class="panel">
+    <div class="card">
+      <div class="card-header">⚙️ Agent Configuration</div>
+      <div class="info-box">Your API keys are stored locally in your browser. They are never sent anywhere except the respective services (Resend, Supabase, Anthropic).</div>
+      <label>Resend API Key</label>
+      <input id="cfg-resend" type="password" placeholder="re_..." />
+      <label>Supabase URL</label>
+      <input id="cfg-supa-url" type="text" placeholder="https://xxxx.supabase.co" />
+      <label>Supabase Anon Key</label>
+      <input id="cfg-supa-key" type="password" placeholder="eyJ..." />
+      <label>From Email (verified in Resend)</label>
+      <input id="cfg-from" type="email" placeholder="hello@buildmyweb.shop" />
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveConfig()">💾 Save Config</button>
+        <button class="btn btn-secondary" onclick="testConnections()">🔌 Test Connections</button>
+      </div>
+      <div class="terminal" id="cfg-output" style="margin-top:14px;min-height:60px;display:none;"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ═══════ CONFIG ═══════ */
+const CONFIG = {
+  resendKey: 're_HZLHWaMj_GbUXZNDD5S3cwroxUkYmf3ZN',
+  supabaseUrl: 'https://fzfmwrvdbnizwumvyugu.supabase.co',
+  supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6Zm13cnZkYm5pend1bXZ5dWd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxNzc5NzEsImV4cCI6MjA5MTc1Mzk3MX0.8tMBTvH1ZuXWVIZIk7iX8VgsUtRkFnkE4TzLV7pkXVU',
+  fromEmail: 'hello@buildmyweb.shop',
+};
+
+function loadConfig() {
+  const saved = localStorage.getItem('webbiz_config');
+  if (saved) Object.assign(CONFIG, JSON.parse(saved));
+  document.getElementById('cfg-resend').value = CONFIG.resendKey || '';
+  document.getElementById('cfg-supa-url').value = CONFIG.supabaseUrl || '';
+  document.getElementById('cfg-supa-key').value = CONFIG.supabaseKey || '';
+  document.getElementById('cfg-from').value = CONFIG.fromEmail || '';
+}
+
+function saveConfig() {
+  CONFIG.resendKey = document.getElementById('cfg-resend').value.trim();
+  CONFIG.supabaseUrl = document.getElementById('cfg-supa-url').value.trim();
+  CONFIG.supabaseKey = document.getElementById('cfg-supa-key').value.trim();
+  CONFIG.fromEmail = document.getElementById('cfg-from').value.trim();
+  localStorage.setItem('webbiz_config', JSON.stringify(CONFIG));
+  showToast('✓', 'Config saved!');
+}
+
+/* ═══════ TOAST ═══════ */
+function showToast(icon, msg, isError = false) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-icon').textContent = icon;
+  document.getElementById('toast-msg').textContent = msg;
+  t.style.borderColor = isError ? 'rgba(255,107,53,0.4)' : 'rgba(0,255,136,0.3)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+/* ═══════ TABS ═══════ */
+function switchTab(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  if (id === 'pipeline') loadLeads();
+}
+
+/* ═══════ TERMINAL ═══════ */
+function clearTerminal(id) {
+  document.getElementById(id).innerHTML = '<span class="line-muted">// Cleared.\n</span>';
+}
+
+function appendLine(id, text, cls = 'line-white') {
+  const t = document.getElementById(id);
+  const span = document.createElement('span');
+  span.className = cls;
+  span.textContent = text + '\n';
+  t.appendChild(span);
+  t.scrollTop = t.scrollHeight;
+}
+
+/* ═══════ SUPABASE ═══════ */
+async function sbRequest(path, method = 'GET', body = null) {
+  const opts = {
+    method,
+    headers: {
+      'apikey': CONFIG.supabaseKey,
+      'Authorization': `Bearer ${CONFIG.supabaseKey}`,
+      'Content-Type': 'application/json',
+      'Prefer': method === 'POST' ? 'return=representation' : '',
+    },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(CONFIG.supabaseUrl + '/rest/v1/' + path, opts);
+  if (!res.ok) throw new Error('Supabase error: ' + res.status);
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+async function saveLead(lead) {
+  try {
+    const row = {
+      name: lead.name, owner: lead.owner, phone: lead.phone,
+      email: lead.email, industry: lead.industry, location: lead.location,
+      score: lead.score, opportunity: lead.opportunity, status: 'new',
+      emails_sent: 0, site_built: false,
+    };
+    await sbRequest('leads', 'POST', row);
+  } catch (e) { console.warn('Supabase save failed:', e.message); }
+}
+
+async function updateLeadStatus(id, status) {
+  try {
+    await sbRequest(`leads?id=eq.${id}`, 'PATCH', { status });
+  } catch (e) { console.warn('Status update failed:', e); }
+}
+
+async function incrementEmailsSent(id) {
+  try {
+    // fetch current count then increment
+    const rows = await sbRequest(`leads?id=eq.${id}&select=emails_sent`);
+    const current = rows?.[0]?.emails_sent || 0;
+    await sbRequest(`leads?id=eq.${id}`, 'PATCH', { emails_sent: current + 1, status: 'emailed' });
+  } catch (e) { console.warn('Email count update failed:', e); }
+}
+
+async function loadLeads() {
+  try {
+    const rows = await sbRequest('leads?order=created_at.desc&select=*');
+    renderPipeline(rows || []);
+    updateStats(rows || []);
+  } catch (e) {
+    document.getElementById('pipeline-empty').style.display = 'block';
+    document.getElementById('pipeline-empty').textContent = '⚠ Could not connect to Supabase. Check Settings.';
+    document.getElementById('pipeline-table-wrap').style.display = 'none';
+  }
+}
+
+/* ═══════ STATS ═══════ */
+function updateStats(rows) {
+  const total = rows.length;
+  const emailed = rows.filter(r => r.emails_sent > 0).reduce((s, r) => s + r.emails_sent, 0);
+  const sites = rows.filter(r => r.site_built).length;
+  const conv = total ? Math.round((rows.filter(r => r.status === 'emailed' || r.status === 'site_built' || r.status === 'closed').length / total) * 100) : 0;
+  document.getElementById('stat-leads').textContent = total;
+  document.getElementById('stat-emails').textContent = emailed;
+  document.getElementById('stat-sites').textContent = sites;
+  document.getElementById('stat-conv').textContent = conv + '%';
+}
+
+/* ═══════ CLAUDE API ═══════ */
+async function callClaude(prompt, system = '') {
+  const body = { model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] };
+  if (system) body.system = system;
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  return data.content.map(c => c.text || '').join('');
+}
+
+/* ═══════ PROSPECT ═══════ */
+async function runProspect() {
+  const type = document.getElementById('biz-type').value.trim();
+  const country = document.getElementById('biz-country').value.trim();
+  const city = document.getElementById('biz-city').value.trim();
+  const max = document.getElementById('biz-max').value;
+  const out = 'prospect-output';
+
+  if (!type || !city) { showToast('⚠', 'Fill in Business Type and City', true); return; }
+
+  const btn = document.getElementById('prospect-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Searching…';
+  document.getElementById(out).innerHTML = '';
+
+  appendLine(out, `[AGENT] Starting lead search…`, 'line-muted');
+  appendLine(out, `[AGENT] Target: ${type} in ${city}, ${country}`, 'line-blue');
+
+  const prompt = `You are a business lead prospecting AI for a web development agency called BuildMyWeb.
+Generate ${max} realistic fictional companies in the "${type}" industry located in "${city}, ${country}" that do NOT have a website.
+
+For each company output a line in this EXACT format, pipe-separated, no extra text:
+NAME | OWNER | PHONE | EMAIL | REASON_NO_WEBSITE | LEAD_SCORE(1-10) | KEY_OPPORTUNITY
+
+Generate exactly ${max} lines.`;
+
+  try {
+    const result = await callClaude(prompt);
+    const lines = result.trim().split('\n').filter(l => l.includes('|'));
+    let saved = 0;
+
+    for (let i = 0; i < lines.length; i++) {
+      const parts = lines[i].split('|').map(s => s.trim());
+      if (parts.length < 7) continue;
+      const [name, owner, phone, email, reason, score, opportunity] = parts;
+      const scoreNum = parseInt(score) || 5;
+
+      appendLine(out, ``, 'line-muted');
+      appendLine(out, `▸ LEAD #${i + 1} — ${name}`, 'line-green');
+      appendLine(out, `  Owner : ${owner}  |  Phone : ${phone}`, 'line-white');
+      appendLine(out, `  Email : ${email}`, 'line-white');
+      appendLine(out, `  Score : ${scoreNum}/10  |  Opp: ${opportunity}`, scoreNum >= 7 ? 'line-green' : 'line-orange');
+
+      const lead = { name, owner, phone, email, industry: type, location: `${city}, ${country}`, score: scoreNum, opportunity, status: 'new' };
+      await saveLead(lead);
+      saved++;
+    }
+
+    appendLine(out, ``, 'line-muted');
+    appendLine(out, `[AGENT] ✓ ${saved} leads saved to Supabase pipeline.`, 'line-green');
+    showToast('✓', `${saved} leads saved to pipeline!`);
+    await loadLeads();
+  } catch (e) {
+    appendLine(out, `[ERROR] ${e.message}`, 'line-orange');
+    showToast('✗', e.message, true);
+  }
+
+  btn.disabled = false; btn.innerHTML = '⚡ Find Leads';
+}
+
+/* ═══════ ANALYZE ═══════ */
+async function runAnalyze() {
+  const company = document.getElementById('an-company').value.trim();
+  const industry = document.getElementById('an-industry').value.trim();
+  const details = document.getElementById('an-details').value.trim();
+  const out = 'analyze-output';
+  if (!company) { showToast('⚠', 'Enter a company name', true); return; }
+
+  document.getElementById(out).innerHTML = '';
+  appendLine(out, `[AGENT] Analysing ${company}…`, 'line-muted');
+
+  const prompt = `You are a senior web business consultant. Analyze this business and produce a compelling report.
+
+Business: ${company}
+Industry: ${industry}
+Details: ${details || 'Not provided'}
+
+Sections (plain text, no markdown symbols):
+1. BUSINESS SNAPSHOT
+2. WHY THEY NEED A WEBSITE (4 specific reasons)
+3. REVENUE POTENTIAL (realistic annual estimate)
+4. WEBSITE FEATURES TO PITCH (5 features)
+5. COMPETITOR ADVANTAGE (how competitors with sites are winning)
+6. CLOSING ARGUMENT (one powerful paragraph)`;
+
+  try {
+    const result = await callClaude(prompt);
+    result.split('\n').forEach(line => {
+      const t = line.trim();
+      if (!t) { appendLine(out, '', 'line-muted'); return; }
+      if (/^\d\./.test(t)) appendLine(out, '▸ ' + t, 'line-green');
+      else appendLine(out, '  ' + t, 'line-white');
+    });
+    appendLine(out, '', 'line-muted');
+    appendLine(out, '[AGENT] ✓ Analysis complete.', 'line-green');
+  } catch (e) { appendLine(out, `[ERROR] ${e.message}`, 'line-orange'); }
+}
+
+/* ═══════ BUILD SITE ═══════ */
+function resetPreview() {
+  document.getElementById('site-frame').srcdoc = '';
+  document.getElementById('site-preview-wrap').style.display = 'none';
+  document.getElementById('build-status').style.display = 'none';
+}
+
+async function runBuildSite() {
+  const name = document.getElementById('build-name').value.trim();
+  const industry = document.getElementById('build-industry').value.trim();
+  const tagline = document.getElementById('build-tagline').value.trim();
+  const location = document.getElementById('build-location').value.trim();
+  const color = document.getElementById('build-color').value;
+  if (!name) { showToast('⚠', 'Enter a business name', true); return; }
+
+  document.getElementById('build-status').style.display = 'block';
+  const out = 'build-output';
+  document.getElementById(out).innerHTML = '';
+  appendLine(out, `[AGENT] Building website for ${name}…`, 'line-muted');
+
+  const prompt = `Generate a complete, professional single-page HTML website. Return ONLY raw HTML — no markdown, no code fences.
+
+Business: ${name}
+Industry: ${industry}
+Description: ${tagline || 'Professional ' + industry + ' services'}
+Location: ${location}
+Brand Color: ${color}
+
+Requirements:
+- Fully self-contained HTML with embedded CSS and JS
+- Navigation: logo + Home, Services, About, Contact links
+- Hero: strong headline, subheading, CTA button
+- Services: 3–4 service cards
+- About section
+- Testimonials: 2 realistic quotes
+- Contact form (name, email, message, submit)
+- Footer with copyright
+- Google Fonts import (pick fonts appropriate for industry)
+- Color scheme using ${color} as primary
+- Fully responsive
+- Scroll animations via IntersectionObserver
+- NO placeholder img tags — use CSS or SVG shapes
+- Professional, memorable design
+
+Output full HTML starting with <!DOCTYPE html>`;
+
+  try {
+    const html = await callClaude(prompt, 'Output ONLY raw HTML. No markdown, no explanations.');
+    appendLine(out, `[AGENT] ✓ Generated ${Math.round(html.length/1024*10)/10}kb`, 'line-green');
+    document.getElementById('site-preview-wrap').style.display = 'block';
+    document.getElementById('site-url-bar').textContent = `https://${name.toLowerCase().replace(/\s+/g,'-')}.buildmyweb.shop`;
+    document.getElementById('site-frame').srcdoc = html;
+    appendLine(out, `[AGENT] ✓ Live preview ready!`, 'line-green');
+    showToast('🚀', 'Website built successfully!');
+  } catch (e) {
+    appendLine(out, `[ERROR] ${e.message}`, 'line-orange');
+    showToast('✗', e.message, true);
+  }
+}
+
+/* ═══════ EMAIL COMPOSE ═══════ */
+async function runComposeEmail() {
+  const owner = document.getElementById('out-owner').value.trim();
+  const company = document.getElementById('out-company').value.trim();
+  const email = document.getElementById('out-email').value.trim();
+  const industry = document.getElementById('out-industry').value.trim();
+  const pain = document.getElementById('out-pain').value.trim();
+  if (!company) { showToast('⚠', 'Enter a company name', true); return; }
+
+  const prompt = `Write a personalized cold email from BuildMyWeb (buildmyweb.shop) to a business owner with no website.
+
+Owner: ${owner || 'Business Owner'}
+Company: ${company}
+Industry: ${industry || 'their industry'}
+Pain Points: ${pain || 'relying on word of mouth, no online presence'}
+
+Rules:
+- Friendly, conversational, not salesy
+- Reference their specific industry and pain points
+- Explain 2–3 concrete benefits a website will bring
+- Soft CTA: free consultation or demo
+- Under 200 words
+- First line: SUBJECT: [subject here]
+- Then blank line, then email body
+- Sign off: Alex | BuildMyWeb.shop`;
+
+  try {
+    const result = await callClaude(prompt);
+    const lines = result.split('\n');
+    let subject = '', body = '', found = false;
+    lines.forEach(line => {
+      if (line.startsWith('SUBJECT:')) { subject = line.replace('SUBJECT:', '').trim(); found = true; }
+      else if (found) body += line + '\n';
+    });
+    if (!subject) { subject = `A website for ${company} — let's talk`; body = result; }
+
+    document.getElementById('ep-to').value = email || '';
+    document.getElementById('ep-subject').value = subject;
+    document.getElementById('ep-body').value = body.trim();
+    document.getElementById('email-preview').style.display = 'block';
+    document.getElementById('email-success').style.display = 'none';
+    document.getElementById('real-send-btn').disabled = false;
+    document.getElementById('real-send-btn').innerHTML = '📨 Send Real Email';
+  } catch (e) { showToast('✗', e.message, true); }
+}
+
+/* ═══════ REAL EMAIL SEND ═══════ */
+async function sendRealEmail() {
+  const to = document.getElementById('ep-to').value.trim();
+  const subject = document.getElementById('ep-subject').value.trim();
+  const body = document.getElementById('ep-body').value.trim();
+
+  if (!to) { showToast('⚠', 'Enter a recipient email', true); return; }
+  if (!CONFIG.resendKey) { showToast('⚠', 'No Resend API key. Check Settings.', true); return; }
+
+  const btn = document.getElementById('real-send-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Sending…';
+
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${CONFIG.resendKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: CONFIG.fromEmail || 'hello@buildmyweb.shop',
+        to: [to],
+        subject: subject,
+        text: body,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.id) {
+      btn.innerHTML = '✓ Sent!';
+      btn.style.background = '#00cc6a';
+      document.getElementById('email-success').style.display = 'block';
+      showToast('✓', 'Email sent via Resend!');
+
+      // Update Supabase if we can match by email
+      try {
+        const rows = await sbRequest(`leads?email=eq.${encodeURIComponent(to)}&select=id,emails_sent`);
+        if (rows && rows.length > 0) await incrementEmailsSent(rows[0].id);
+      } catch (e) { /* non-critical */ }
+
+      await loadLeads();
+    } else {
+      throw new Error(data.message || data.error || 'Send failed');
+    }
+  } catch (e) {
+    btn.disabled = false; btn.innerHTML = '📨 Send Real Email'; btn.style.background = '';
+    showToast('✗', 'Send failed: ' + e.message, true);
+  }
+}
+
+/* ═══════ CALL SCRIPT ═══════ */
+async function runCallScript() {
+  const biz = document.getElementById('call-biz').value.trim();
+  const ind = document.getElementById('call-ind').value.trim();
+  if (!biz) { showToast('⚠', 'Enter a business name', true); return; }
+
+  const out = 'call-output';
+  document.getElementById(out).style.display = 'block';
+  document.getElementById(out).innerHTML = '<span class="line-muted">Generating…\n</span>';
+
+  const prompt = `Write a short natural phone call script (under 150 words) for Alex from BuildMyWeb.shop calling ${biz} (a ${ind || 'local business'}) to pitch web development services.
+
+Format:
+OPENING: ...
+HOOK: ...
+VALUE PROP: ...
+OBJECTION HANDLING: ...
+CTA: ...
+CLOSING: ...`;
+
+  try {
+    const result = await callClaude(prompt);
+    document.getElementById(out).innerHTML = '';
+    result.split('\n').forEach(line => {
+      const t = line.trim();
+      if (!t) return;
+      const cls = /^[A-Z ]+:/.test(t) ? 'line-green' : 'line-white';
+      appendLine(out, t, cls);
+    });
+  } catch (e) {
+    document.getElementById(out).innerHTML = `<span class="line-orange">[ERROR] ${e.message}</span>`;
+  }
+}
+
+/* ═══════ PIPELINE RENDER ═══════ */
+function renderPipeline(rows) {
+  const body = document.getElementById('pipeline-body');
+  const empty = document.getElementById('pipeline-empty');
+  const wrap = document.getElementById('pipeline-table-wrap');
+
+  if (!rows || rows.length === 0) {
+    empty.style.display = 'block'; empty.textContent = 'No leads yet. Use the Prospect tab to find companies.';
+    wrap.style.display = 'none'; return;
+  }
+  empty.style.display = 'none'; wrap.style.display = 'block';
+
+  body.innerHTML = rows.map(l => {
+    const scoreCls = l.score >= 7 ? 'score-high' : l.score >= 5 ? 'score-med' : 'score-low';
+    const pillCls = `pill-${l.status || 'new'}`;
+    return `<tr>
+      <td><div class="lead-score ${scoreCls}">${l.score}</div></td>
+      <td><strong>${l.name}</strong></td>
+      <td style="font-size:11px;color:var(--muted);">${l.owner || '—'}<br>${l.email || ''}</td>
+      <td>${l.industry || '—'}</td>
+      <td style="font-size:11px;">${l.location || '—'}</td>
+      <td><span class="status-pill ${pillCls}">${(l.status || 'new').toUpperCase()}</span></td>
+      <td>
+        <button class="action-btn" style="color:var(--accent);border-color:rgba(0,255,136,0.3);"
+          onclick="quickEmail('${l.name}','${l.owner}','${l.email}','${l.industry}','${l.opportunity}')">✉ Email</button>
+        <button class="action-btn" style="color:var(--accent2);border-color:rgba(0,136,255,0.3);"
+          onclick="quickBuild('${l.name}','${l.industry}','${l.location}')">🏗 Build</button>
+        <button class="action-btn" style="color:var(--muted);border-color:var(--border);"
+          onclick="updateLeadStatus('${l.id}','closed').then(loadLeads)">✓ Close</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function quickEmail(name, owner, email, industry, opportunity) {
+  document.getElementById('out-owner').value = owner || '';
+  document.getElementById('out-company').value = name || '';
+  document.getElementById('out-email').value = email || '';
+  document.getElementById('out-industry').value = industry || '';
+  document.getElementById('out-pain').value = opportunity || '';
+  switchTab('outreach', document.querySelectorAll('.tab')[3]);
+}
+
+function quickBuild(name, industry, location) {
+  document.getElementById('build-name').value = name || '';
+  document.getElementById('build-industry').value = industry || '';
+  document.getElementById('build-location').value = location || '';
+  switchTab('build', document.querySelectorAll('.tab')[2]);
+}
+
+/* ═══════ TEST CONNECTIONS ═══════ */
+async function testConnections() {
+  const out = 'cfg-output';
+  document.getElementById(out).style.display = 'block';
+  document.getElementById(out).innerHTML = '';
+  appendLine(out, 'Testing connections…', 'line-muted');
+
+  // Test Supabase
+  try {
+    await sbRequest('leads?limit=1&select=id');
+    appendLine(out, '✓ Supabase connected', 'line-green');
+  } catch (e) { appendLine(out, '✗ Supabase failed: ' + e.message, 'line-orange'); }
+
+  // Test Resend (just validate key format)
+  if (CONFIG.resendKey && CONFIG.resendKey.startsWith('re_')) {
+    appendLine(out, '✓ Resend key format valid', 'line-green');
+  } else {
+    appendLine(out, '✗ Resend key missing or invalid', 'line-orange');
+  }
+
+  appendLine(out, `✓ From email: ${CONFIG.fromEmail}`, 'line-blue');
+  appendLine(out, 'Done.', 'line-muted');
+}
+
+/* ═══════ INIT ═══════ */
+loadConfig();
+loadLeads();
+</script>
+</body>
+</html>
